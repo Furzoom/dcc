@@ -7,7 +7,7 @@ static char* current_input;
 void error(char* fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  vfprintf(stderr, fmt,ap);
+  vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");
   va_end(ap);
   exit(1);
@@ -64,6 +64,16 @@ static bool startswith(char* p, char* q) {
   return strncmp(p, q, strlen(q)) == 0;
 }
 
+// Returns true if c is valid as the first character of an identifier.
+static bool is_ident1(char c) {
+  return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+}
+
+// Returns true if c is valid as a non-first character of an identifier.
+static bool is_ident2(char c) {
+  return is_ident1(c) || ('0' <= c && c <= '9');
+}
+
 // Read a punctuation
 static int read_punct(char* p) {
   if (startswith(p, "==") || startswith(p, "!=") ||
@@ -89,16 +99,19 @@ Token* tokenize(char* p) {
 
     // Numeric literal.
     if (isdigit(*p)) {
-      cur = cur->next = new_token(TK_NUM, p, p);
       char* q = p;
+      cur = cur->next = new_token(TK_NUM, p, p);
       cur->val = strtoul(p, &p, 10);
       cur->len = p - q;
       continue;
     }
 
-    if ('a' <= *p && *p <= 'z') {
-      cur = cur->next = new_token(TK_IDENT, p, p+1);
-      p++;
+    if (is_ident1(*p)) {
+      char* start = p;
+      do {
+        p++;
+      } while (is_ident2(*p));
+      cur = cur->next = new_token(TK_IDENT, start, p);
       continue;
     }
 

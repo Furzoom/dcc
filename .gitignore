@@ -1,6 +1,7 @@
 *~
 *.o
 *.s
+.swp
 a.out
 /tmp*
 /dcc
@@ -8,3 +9,4 @@ a.out
 build/
 output/
 
+.idea/

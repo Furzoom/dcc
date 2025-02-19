@@ -89,6 +89,7 @@ static bool is_keyword(Token* tok) {
     "return",
     "if",
     "else",
+    "for",
   };
 
   for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++) {

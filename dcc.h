@@ -9,6 +9,7 @@
 #include <string.h>
 
 // Forward declaration.
+typedef struct Type Type;
 typedef struct Node Node;
 
 //
@@ -88,7 +89,8 @@ typedef enum {
 struct Node {
   NodeKind kind;  // Node kind
   Node* next;     // Next node
-  Token* tok;      // Representative token
+  Type* ty;       // Type, e.g. int or pinter to int
+  Token* tok;     // Representative token
 
   Node* lhs;      // Left-hand side
   Node* rhs;      // Right-hand size
@@ -108,6 +110,25 @@ struct Node {
 };
 
 Function* parse(Token* tok);
+
+//
+// type.c
+//
+
+typedef enum {
+  TY_INT,
+  TY_PTR,
+} TypeKind;
+
+struct Type {
+  TypeKind kind;
+  Type* base;
+};
+
+extern Type* ty_int;
+
+bool is_integer(Type* ty);
+void add_type(Node* node);
 
 //
 // codegen.c

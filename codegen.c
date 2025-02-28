@@ -27,6 +27,27 @@ static int align_to(int n, int align) {
   return (n + align - 1) / align * align;
 }
 
+// Load a value from where %rax is pointing to.
+static void load(Type* ty) {
+  if (ty->kind == TY_ARRAY) {
+    // If it is an array, do not attmpt to load a value to the
+    // register because in general we can't load an entire array to a
+    // register. As a result, the result of an evaluation of an array
+    // becomes not the array itself but the address of the array.
+    // This is where "array is automatically converted to a pointer to
+    // the first element of the array in C" occurs.
+    return;
+  }
+
+  printf("  mov (%%rax), %%rax\n");
+}
+
+// Store %rax to an address that the stack top is pointing to.
+static void store(void) {
+  pop("%rdi");
+  printf("  mov %%rax, (%%rdi)\n");
+}
+
 // Compute the obsolute address of a given node.
 // It's an error if a given node does not reside in memory.
 static void gen_addr(Node* node) {
@@ -54,11 +75,11 @@ static void gen_expr(Node* node) {
       return;
     case ND_VAR:
       gen_addr(node);
-      printf("  mov (%%rax), %%rax\n");
+      load(node->ty);
       return;
     case ND_DEREF:
       gen_expr(node->lhs);
-      printf("  mov (%%rax), %%rax\n");
+      load(node->ty);
       return;
     case ND_ADDR:
       gen_addr(node->lhs);
@@ -67,8 +88,7 @@ static void gen_expr(Node* node) {
       gen_addr(node->lhs);
       push();
       gen_expr(node->rhs);
-      pop("%rdi");
-      printf("  mov %%rax, (%%rdi)\n");
+      store();
       return;
     case ND_FUNCALL: {
       int nargs = 0;
@@ -185,7 +205,7 @@ static void assign_lvar_offsets(Function* prog) {
   for (Function* fn = prog; fn; fn = fn->next) {
     int offset = 0;
     for (Obj* var = fn->locals; var; var = var->next) {
-      offset += 8;
+      offset += var->ty->size;
       var->offset = -offset;
     }
     fn->stack_size = align_to(offset, 16);
